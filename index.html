@@ -470,7 +470,7 @@
 <div class="modal-overlay" id="add-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3>새 노트 추가</h3>
+      <h3 id="add-modal-title">새 노트 추가</h3>
       <button class="modal-close" onclick="closeAddModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -508,7 +508,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAddModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveNote()">저장</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveNote()">저장</button>
     </div>
   </div>
 </div>
@@ -530,6 +530,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeViewModal()">닫기</button>
+      <button class="btn btn-primary" onclick="openEditFromView()">✏️ 수정</button>
     </div>
   </div>
 </div>
@@ -639,10 +640,15 @@
     document.getElementById('total-count').textContent = `총 ${notes.length}개`;
   }
 
+  let editingId = null;
+
   function openAddModal() {
     if (currentSubject !== '전체') {
       document.getElementById('note-subject').value = currentSubject;
     }
+    document.getElementById('add-modal-title').textContent = '새 노트 추가';
+    document.getElementById('save-btn').textContent = '저장';
+    editingId = null;
     document.getElementById('add-modal').classList.add('open');
     document.getElementById('note-keyword').focus();
   }
@@ -651,6 +657,7 @@
     document.getElementById('note-keyword').value = '';
     document.getElementById('note-content').value = '';
     document.getElementById('note-tags').value = '';
+    editingId = null;
   }
 
   function saveNote() {
@@ -665,15 +672,26 @@
       return;
     }
 
-    notes.push({ id: Date.now(), subject, keyword, content, tags, date: new Date().toLocaleDateString('ko-KR') });
+    if (editingId) {
+      const idx = notes.findIndex(n => n.id === editingId);
+      if (idx !== -1) {
+        notes[idx] = { ...notes[idx], subject, keyword, content, tags };
+      }
+    } else {
+      notes.push({ id: Date.now(), subject, keyword, content, tags, date: new Date().toLocaleDateString('ko-KR') });
+    }
+
     saveNotes();
     closeAddModal();
     renderNotes();
   }
 
+  let currentViewId = null;
+
   function openViewModal(id) {
     const note = notes.find(n => n.id === id);
     if (!note) return;
+    currentViewId = id;
     document.getElementById('view-keyword').textContent = note.keyword;
     document.getElementById('view-subject').textContent = note.subject + ' · ' + note.date;
     document.getElementById('view-content').textContent = note.content;
@@ -682,6 +700,22 @@
   }
   function closeViewModal() {
     document.getElementById('view-modal').classList.remove('open');
+    currentViewId = null;
+  }
+
+  function openEditFromView() {
+    const note = notes.find(n => n.id === currentViewId);
+    if (!note) return;
+    closeViewModal();
+    // populate add modal with existing data
+    document.getElementById('note-subject').value = note.subject;
+    document.getElementById('note-keyword').value = note.keyword;
+    document.getElementById('note-content').value = note.content;
+    document.getElementById('note-tags').value = note.tags.join(', ');
+    document.getElementById('add-modal-title').textContent = '노트 수정';
+    document.getElementById('save-btn').textContent = '수정 완료';
+    editingId = note.id;
+    document.getElementById('add-modal').classList.add('open');
   }
 
   function deleteNote(e, id) {
