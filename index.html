@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국시 노트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: #2a3045;
+    --accent: #4f8ef7;
+    --accent2: #7dd3c0;
+    --text: #e8eaf0;
+    --text-muted: #7a8299;
+    --danger: #e06c75;
+    --yellow: #e5c07b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.25rem;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  header span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 61px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .sidebar-section {
+    padding: 14px 12px 6px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .subject-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .subject-btn:hover { background: var(--surface2); color: var(--text); }
+  .subject-btn.active {
+    background: var(--surface2);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+  .subject-btn .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .subject-btn.active .dot { background: var(--accent); }
+  .count-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    background: var(--surface2);
+    color: var(--text-muted);
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  .subject-btn.active .count-badge {
+    background: rgba(79,142,247,0.15);
+    color: var(--accent);
+  }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .toolbar {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+  }
+  .toolbar h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    flex: 1;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+  .btn-primary:hover { background: #3a7ae0; }
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  /* SEARCH BAR */
+  .search-bar {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .search-bar input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--text-muted); }
+
+  /* NOTES LIST */
+  .notes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    gap: 10px;
+    padding: 40px;
+    text-align: center;
+  }
+  .empty-state .icon { font-size: 2.5rem; opacity: 0.4; }
+  .empty-state p { font-size: 0.9rem; }
+
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .note-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .note-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .note-keyword {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent2);
+  }
+  .note-date {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .note-preview {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .note-tags {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(79,142,247,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(79,142,247,0.2);
+  }
+  .note-delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .note-card:hover .note-delete { opacity: 1; }
+  .note-delete:hover { color: var(--danger); background: rgba(224,108,117,0.1); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-header h3 { font-size: 1rem; font-weight: 600; }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .modal-close:hover { color: var(--text); background: var(--surface2); }
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .form-input, .form-textarea, .form-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
+  .form-textarea {
+    resize: vertical;
+    min-height: 140px;
+    line-height: 1.7;
+  }
+  .form-select option { background: var(--surface2); }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* VIEW MODAL */
+  .view-modal-content {
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+  .view-keyword {
+    font-size: 1.2rem;
+    font-family: 'Noto Serif KR', serif;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+  .view-subject {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .view-body {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* MOBILE responsive */
+  @media (max-width: 600px) {
+    .sidebar { width: 160px; min-width: 160px; }
+    .subject-btn { padding: 9px 10px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📖 국시 노트</h1>
+  <span id="total-count">총 0개</span>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section">메이저</div>
+    <button class="subject-btn active" data-subject="전체" onclick="selectSubject(this)">
+      <span class="dot"></span> 전체 <span class="count-badge" id="cnt-전체">0</span>
+    </button>
+    <button class="subject-btn" data-subject="내과" onclick="selectSubject(this)">
+      <span class="dot"></span> 내과 <span class="count-badge" id="cnt-내과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="외과" onclick="selectSubject(this)">
+      <span class="dot"></span> 외과 <span class="count-badge" id="cnt-외과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="산부인과" onclick="selectSubject(this)">
+      <span class="dot"></span> 산부인과 <span class="count-badge" id="cnt-산부인과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="소아과" onclick="selectSubject(this)">
+      <span class="dot"></span> 소아과 <span class="count-badge" id="cnt-소아과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="정신건강의학과" onclick="selectSubject(this)">
+      <span class="dot"></span> 정신건강의학과 <span class="count-badge" id="cnt-정신건강의학과">0</span>
+    </button>
+
+    <div class="sidebar-section">마이너</div>
+    <button class="subject-btn" data-subject="신경과/신경외과" onclick="selectSubject(this)">
+      <span class="dot"></span> 신경과/신경외과 <span class="count-badge" id="cnt-신경과/신경외과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="피부과" onclick="selectSubject(this)">
+      <span class="dot"></span> 피부과 <span class="count-badge" id="cnt-피부과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="이비인후과" onclick="selectSubject(this)">
+      <span class="dot"></span> 이비인후과 <span class="count-badge" id="cnt-이비인후과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="안과" onclick="selectSubject(this)">
+      <span class="dot"></span> 안과 <span class="count-badge" id="cnt-안과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="응급의학과" onclick="selectSubject(this)">
+      <span class="dot"></span> 응급의학과 <span class="count-badge" id="cnt-응급의학과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="정형외과" onclick="selectSubject(this)">
+      <span class="dot"></span> 정형외과 <span class="count-badge" id="cnt-정형외과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="비뇨의학과" onclick="selectSubject(this)">
+      <span class="dot"></span> 비뇨의학과 <span class="count-badge" id="cnt-비뇨의학과">0</span>
+    </button>
+    <button class="subject-btn" data-subject="예방의학" onclick="selectSubject(this)">
+      <span class="dot"></span> 예방의학 <span class="count-badge" id="cnt-예방의학">0</span>
+    </button>
+    <button class="subject-btn" data-subject="의료법규" onclick="selectSubject(this)">
+      <span class="dot"></span> 의료법규 <span class="count-badge" id="cnt-의료법규">0</span>
+    </button>
+  </aside>
+
+  <div class="main">
+    <div class="toolbar">
+      <h2 id="current-subject-title">전체 노트</h2>
+      <button class="btn btn-primary" onclick="openAddModal()">+ 노트 추가</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="키워드, 내용으로 검색..." oninput="renderNotes()">
+    </div>
+    <div class="notes-list" id="notes-list"></div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>새 노트 추가</h3>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">과목</label>
+        <select class="form-select" id="note-subject">
+          <option value="내과">내과</option>
+          <option value="외과">외과</option>
+          <option value="산부인과">산부인과</option>
+          <option value="소아과">소아과</option>
+          <option value="정신건강의학과">정신건강의학과</option>
+          <option value="신경과/신경외과">신경과/신경외과</option>
+          <option value="피부과">피부과</option>
+          <option value="이비인후과">이비인후과</option>
+          <option value="안과">안과</option>
+          <option value="응급의학과">응급의학과</option>
+          <option value="정형외과">정형외과</option>
+          <option value="비뇨의학과">비뇨의학과</option>
+          <option value="예방의학">예방의학</option>
+          <option value="의료법규">의료법규</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">검색 키워드 (검색했던 단어)</label>
+        <input type="text" class="form-input" id="note-keyword" placeholder="예: lichen sclerosis">
+      </div>
+      <div class="form-group">
+        <label class="form-label">새로 알게 된 내용</label>
+        <textarea class="form-textarea" id="note-content" placeholder="검색하면서 새로 알게 된 내용을 자유롭게 적어요..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">태그 (선택, 쉼표로 구분)</label>
+        <input type="text" class="form-input" id="note-tags" placeholder="예: 외음부, 폐경, 치료">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveNote()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" id="view-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>노트 보기</h3>
+      <button class="modal-close" onclick="closeViewModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="view-keyword" id="view-keyword"></div>
+      <div class="view-subject" id="view-subject"></div>
+      <div class="view-body">
+        <div class="view-modal-content" id="view-content"></div>
+      </div>
+      <div class="note-tags" id="view-tags" style="margin-top:12px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeViewModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'kmle_notes_v1';
+  let notes = [];
+  let currentSubject = '전체';
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      notes = raw ? JSON.parse(raw) : getSampleNotes();
+    } catch(e) {
+      notes = getSampleNotes();
+    }
+  }
+
+  function saveNotes() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  }
+
+  function getSampleNotes() {
+    return [
+      {
+        id: Date.now(),
+        subject: '산부인과',
+        keyword: 'Lichen sclerosis',
+        content: '- 폐경 후 여성에서 흔함\n- 증상: 심한 가려움, 외음부 피부 얇아짐, 흰색 병변\n- 치료: 강력한 국소 스테로이드 (clobetasol)\n- 방치 시 외음부암(SCC) 위험↑',
+        tags: ['외음부', '폐경', '피부변화'],
+        date: new Date().toLocaleDateString('ko-KR')
+      },
+      {
+        id: Date.now() + 1,
+        subject: '산부인과',
+        keyword: 'Atrophic vaginitis',
+        content: '- 에스트로겐 감소로 인한 질 위축\n- 증상: 질 건조감, 성교통, 반복 감염\n- Lichen sclerosis와 감별: 위치(질 내부 vs 외음부), 외관\n- 치료: 국소 에스트로겐 크림',
+        tags: ['질염', '폐경', '에스트로겐'],
+        date: new Date().toLocaleDateString('ko-KR')
+      }
+    ];
+  }
+
+  function selectSubject(btn) {
+    document.querySelectorAll('.subject-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSubject = btn.dataset.subject;
+    document.getElementById('current-subject-title').textContent =
+      currentSubject === '전체' ? '전체 노트' : currentSubject;
+    document.getElementById('search-input').value = '';
+    renderNotes();
+  }
+
+  function renderNotes() {
+    const list = document.getElementById('notes-list');
+    const q = document.getElementById('search-input').value.toLowerCase();
+
+    let filtered = notes;
+    if (currentSubject !== '전체') {
+      filtered = filtered.filter(n => n.subject === currentSubject);
+    }
+    if (q) {
+      filtered = filtered.filter(n =>
+        n.keyword.toLowerCase().includes(q) ||
+        n.content.toLowerCase().includes(q) ||
+        n.tags.some(t => t.toLowerCase().includes(q))
+      );
+    }
+
+    filtered.sort((a, b) => b.id - a.id);
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📋</div>
+          <p>${q ? '검색 결과가 없어요.' : '아직 노트가 없어요.<br>검색하면서 새로 알게 된 내용을 추가해봐요!'}</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(note => `
+      <div class="note-card" onclick="openViewModal(${note.id})">
+        <button class="note-delete" onclick="deleteNote(event, ${note.id})">✕</button>
+        <div class="note-card-header">
+          <div class="note-keyword">${escHtml(note.keyword)}</div>
+          <div class="note-date">${note.date}</div>
+        </div>
+        <div class="note-preview">${escHtml(note.content)}</div>
+        ${note.tags.length ? `<div class="note-tags">${note.tags.map(t => `<span class="tag">#${escHtml(t)}</span>`).join('')}</div>` : ''}
+      </div>
+    `).join('');
+
+    updateCounts();
+  }
+
+  function updateCounts() {
+    const subjects = ['전체','내과','외과','산부인과','소아과','정신건강의학과',
+      '신경과/신경외과','피부과','이비인후과','안과','응급의학과','정형외과',
+      '비뇨의학과','예방의학','의료법규'];
+    subjects.forEach(s => {
+      const el = document.getElementById('cnt-' + s);
+      if (el) {
+        const cnt = s === '전체' ? notes.length : notes.filter(n => n.subject === s).length;
+        el.textContent = cnt;
+      }
+    });
+    document.getElementById('total-count').textContent = `총 ${notes.length}개`;
+  }
+
+  function openAddModal() {
+    if (currentSubject !== '전체') {
+      document.getElementById('note-subject').value = currentSubject;
+    }
+    document.getElementById('add-modal').classList.add('open');
+    document.getElementById('note-keyword').focus();
+  }
+  function closeAddModal() {
+    document.getElementById('add-modal').classList.remove('open');
+    document.getElementById('note-keyword').value = '';
+    document.getElementById('note-content').value = '';
+    document.getElementById('note-tags').value = '';
+  }
+
+  function saveNote() {
+    const keyword = document.getElementById('note-keyword').value.trim();
+    const content = document.getElementById('note-content').value.trim();
+    const subject = document.getElementById('note-subject').value;
+    const tagsRaw = document.getElementById('note-tags').value;
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    if (!keyword || !content) {
+      alert('키워드와 내용을 입력해주세요.');
+      return;
+    }
+
+    notes.push({ id: Date.now(), subject, keyword, content, tags, date: new Date().toLocaleDateString('ko-KR') });
+    saveNotes();
+    closeAddModal();
+    renderNotes();
+  }
+
+  function openViewModal(id) {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    document.getElementById('view-keyword').textContent = note.keyword;
+    document.getElementById('view-subject').textContent = note.subject + ' · ' + note.date;
+    document.getElementById('view-content').textContent = note.content;
+    document.getElementById('view-tags').innerHTML = note.tags.map(t => `<span class="tag">#${escHtml(t)}</span>`).join('');
+    document.getElementById('view-modal').classList.add('open');
+  }
+  function closeViewModal() {
+    document.getElementById('view-modal').classList.remove('open');
+  }
+
+  function deleteNote(e, id) {
+    e.stopPropagation();
+    if (!confirm('이 노트를 삭제할까요?')) return;
+    notes = notes.filter(n => n.id !== id);
+    saveNotes();
+    renderNotes();
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('add-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeAddModal();
+  });
+  document.getElementById('view-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeViewModal();
+  });
+
+  // Init
+  loadNotes();
+  renderNotes();
+</script>
+</body>
+</html>
