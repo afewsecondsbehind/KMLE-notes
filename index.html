@@ -383,6 +383,101 @@
     margin-top: 12px;
   }
 
+  /* IMAGE UPLOAD */
+  .img-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+  .img-upload-area:hover { border-color: var(--accent); color: var(--accent); }
+  .img-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .img-preview-wrap {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .img-preview-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .img-remove {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .note-thumb {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .note-thumb img {
+    width: 48px; height: 48px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+  .view-images {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .view-images img {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .view-images img:hover { transform: scale(1.03); }
+
+  /* LIGHTBOX */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 95vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    object-fit: contain;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 16px; right: 20px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -505,6 +600,14 @@
         <label class="form-label">태그 (선택, 쉼표로 구분)</label>
         <input type="text" class="form-input" id="note-tags" placeholder="예: 외음부, 폐경, 치료">
       </div>
+      <div class="form-group">
+        <label class="form-label">스크린샷 첨부 (선택)</label>
+        <div class="img-upload-area" onclick="document.getElementById('img-file-input').click()">
+          📷 클릭해서 이미지 추가
+        </div>
+        <input type="file" id="img-file-input" accept="image/*" multiple style="display:none" onchange="handleImageUpload(event)">
+        <div class="img-preview-grid" id="img-preview-grid"></div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAddModal()">취소</button>
@@ -527,6 +630,7 @@
         <div class="view-modal-content" id="view-content"></div>
       </div>
       <div class="note-tags" id="view-tags" style="margin-top:12px;"></div>
+      <div class="view-images" id="view-images"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeViewModal()">닫기</button>
@@ -535,10 +639,17 @@
   </div>
 </div>
 
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
 <script>
   const STORAGE_KEY = 'kmle_notes_v1';
   let notes = [];
   let currentSubject = '전체';
+  let pendingImages = []; // base64 images being added
 
   function loadNotes() {
     try {
@@ -620,6 +731,7 @@
         </div>
         <div class="note-preview">${escHtml(note.content)}</div>
         ${note.tags.length ? `<div class="note-tags">${note.tags.map(t => `<span class="tag">#${escHtml(t)}</span>`).join('')}</div>` : ''}
+        ${note.images && note.images.length ? `<div class="note-thumb">${note.images.map(src => `<img src="${src}" alt="">`).join('')}</div>` : ''}
       </div>
     `).join('');
 
@@ -642,6 +754,55 @@
 
   let editingId = null;
 
+  function handleImageUpload(e) {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          // Compress: max 800px wide, 0.6 quality
+          const canvas = document.createElement('canvas');
+          const maxW = 800;
+          const scale = Math.min(1, maxW / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.6);
+          pendingImages.push(compressed);
+          renderImagePreviews();
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  }
+
+  function renderImagePreviews() {
+    const grid = document.getElementById('img-preview-grid');
+    grid.innerHTML = pendingImages.map((src, i) => `
+      <div class="img-preview-wrap">
+        <img src="${src}" alt="preview">
+        <button class="img-remove" onclick="removePreviewImage(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function removePreviewImage(idx) {
+    pendingImages.splice(idx, 1);
+    renderImagePreviews();
+  }
+
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+
   function openAddModal() {
     if (currentSubject !== '전체') {
       document.getElementById('note-subject').value = currentSubject;
@@ -657,6 +818,8 @@
     document.getElementById('note-keyword').value = '';
     document.getElementById('note-content').value = '';
     document.getElementById('note-tags').value = '';
+    pendingImages = [];
+    document.getElementById('img-preview-grid').innerHTML = '';
     editingId = null;
   }
 
@@ -675,10 +838,11 @@
     if (editingId) {
       const idx = notes.findIndex(n => n.id === editingId);
       if (idx !== -1) {
-        notes[idx] = { ...notes[idx], subject, keyword, content, tags };
+        const existingImages = notes[idx].images || [];
+        notes[idx] = { ...notes[idx], subject, keyword, content, tags, images: [...existingImages, ...pendingImages] };
       }
     } else {
-      notes.push({ id: Date.now(), subject, keyword, content, tags, date: new Date().toLocaleDateString('ko-KR') });
+      notes.push({ id: Date.now(), subject, keyword, content, tags, images: pendingImages, date: new Date().toLocaleDateString('ko-KR') });
     }
 
     saveNotes();
@@ -696,6 +860,10 @@
     document.getElementById('view-subject').textContent = note.subject + ' · ' + note.date;
     document.getElementById('view-content').textContent = note.content;
     document.getElementById('view-tags').innerHTML = note.tags.map(t => `<span class="tag">#${escHtml(t)}</span>`).join('');
+    const imgs = note.images && note.images.length
+      ? note.images.map(src => `<img src="${src}" alt="" onclick="openLightbox('${src}')">`).join('')
+      : '';
+    document.getElementById('view-images').innerHTML = imgs;
     document.getElementById('view-modal').classList.add('open');
   }
   function closeViewModal() {
@@ -712,6 +880,8 @@
     document.getElementById('note-keyword').value = note.keyword;
     document.getElementById('note-content').value = note.content;
     document.getElementById('note-tags').value = note.tags.join(', ');
+    pendingImages = note.images ? [...note.images] : [];
+    renderImagePreviews();
     document.getElementById('add-modal-title').textContent = '노트 수정';
     document.getElementById('save-btn').textContent = '수정 완료';
     editingId = note.id;
