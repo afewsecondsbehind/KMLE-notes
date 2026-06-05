@@ -107,7 +107,11 @@
     flex-shrink: 0;
   }
   .subject-btn.active .dot { background: var(--accent); }
-  .count-badge {
+  .sub-btn {
+    padding-left: 28px !important;
+    font-size: 0.8rem !important;
+    color: var(--text-muted);
+  }
     margin-left: auto;
     font-size: 0.7rem;
     background: var(--surface2);
@@ -506,6 +510,33 @@
     <button class="subject-btn" data-subject="내과" onclick="selectSubject(this)">
       <span class="dot"></span> 내과 <span class="count-badge" id="cnt-내과">0</span>
     </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 소화기" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 소화기 <span class="count-badge" id="cnt-내과 > 소화기">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 순환기" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 순환기 <span class="count-badge" id="cnt-내과 > 순환기">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 호흡기" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 호흡기 <span class="count-badge" id="cnt-내과 > 호흡기">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 신장" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 신장 <span class="count-badge" id="cnt-내과 > 신장">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 내분비" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 내분비 <span class="count-badge" id="cnt-내과 > 내분비">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 감염" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 감염 <span class="count-badge" id="cnt-내과 > 감염">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 알레르기" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 알레르기 <span class="count-badge" id="cnt-내과 > 알레르기">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 혈액종양" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 혈액종양 <span class="count-badge" id="cnt-내과 > 혈액종양">0</span>
+    </button>
+    <button class="subject-btn sub-btn" data-subject="내과 > 류마티스" onclick="selectSubject(this)">
+      <span class="dot"></span> ∟ 류마티스 <span class="count-badge" id="cnt-내과 > 류마티스">0</span>
+    </button>
     <button class="subject-btn" data-subject="외과" onclick="selectSubject(this)">
       <span class="dot"></span> 외과 <span class="count-badge" id="cnt-외과">0</span>
     </button>
@@ -572,7 +603,16 @@
       <div class="form-group">
         <label class="form-label">과목</label>
         <select class="form-select" id="note-subject">
-          <option value="내과">내과</option>
+          <option value="내과">내과 (전체)</option>
+          <option value="내과 > 소화기"> ∟ 소화기</option>
+          <option value="내과 > 순환기"> ∟ 순환기</option>
+          <option value="내과 > 호흡기"> ∟ 호흡기</option>
+          <option value="내과 > 신장"> ∟ 신장</option>
+          <option value="내과 > 내분비"> ∟ 내분비</option>
+          <option value="내과 > 감염"> ∟ 감염</option>
+          <option value="내과 > 알레르기"> ∟ 알레르기</option>
+          <option value="내과 > 혈액종양"> ∟ 혈액종양</option>
+          <option value="내과 > 류마티스"> ∟ 류마티스</option>
           <option value="외과">외과</option>
           <option value="산부인과">산부인과</option>
           <option value="소아과">소아과</option>
@@ -701,7 +741,11 @@
 
     let filtered = notes;
     if (currentSubject !== '전체') {
-      filtered = filtered.filter(n => n.subject === currentSubject);
+      if (currentSubject === '내과') {
+        filtered = filtered.filter(n => n.subject === '내과' || n.subject.startsWith('내과 >'));
+      } else {
+        filtered = filtered.filter(n => n.subject === currentSubject);
+      }
     }
     if (q) {
       filtered = filtered.filter(n =>
@@ -739,13 +783,18 @@
   }
 
   function updateCounts() {
-    const subjects = ['전체','내과','외과','산부인과','소아과','정신건강의학과',
+    const subjects = ['전체','내과','내과 > 소화기','내과 > 순환기','내과 > 호흡기',
+      '내과 > 신장','내과 > 내분비','내과 > 감염','내과 > 알레르기','내과 > 혈액종양','내과 > 류마티스',
+      '외과','산부인과','소아과','정신건강의학과',
       '신경과/신경외과','피부과','이비인후과','안과','응급의학과','정형외과',
       '비뇨의학과','예방의학','의료법규'];
     subjects.forEach(s => {
       const el = document.getElementById('cnt-' + s);
       if (el) {
-        const cnt = s === '전체' ? notes.length : notes.filter(n => n.subject === s).length;
+        let cnt;
+        if (s === '전체') cnt = notes.length;
+        else if (s === '내과') cnt = notes.filter(n => n.subject === '내과' || n.subject.startsWith('내과 >')).length;
+        else cnt = notes.filter(n => n.subject === s).length;
         el.textContent = cnt;
       }
     });
